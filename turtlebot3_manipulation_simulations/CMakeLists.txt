@@ -13,9 +13,9 @@ endif()
 # Replace the find_package invocation with catkin and the COMPONENTS with: 
 find_package(ament_cmake REQUIRED)
 
-<export>
-  <build_type>ament_cmake</build_type>
-</export>
+#<export>
+#  <build_type>ament_cmake</build_type>
+#</export>
 
 # catkin_metapackage()  # metapackages are no longer a special package type. can remove metapackage tags from package.xml (presumably also cmakelists
 ament_package()  # Move and update the catkin_package invocation with: Invoke ament_package instead but after all targets have been registered.
