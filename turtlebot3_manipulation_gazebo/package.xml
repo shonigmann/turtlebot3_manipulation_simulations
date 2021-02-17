@@ -2,7 +2,7 @@
 <package format="2">
   <name>turtlebot3_manipulation_gazebo</name>
   <version>2.0.1</version>
-  <description>ROS package for turtlebot3_manipulation_gazebo</description>
+  <description>ROS2 package for turtlebot3_manipulation_gazebo</description>
 
   <license>Apache 2.0</license>
   <author email="thlim@robotis.com">Darby Lim</author>
@@ -13,9 +13,19 @@
   <url type="repository">https://github.com/ROBOTIS-GIT/turtlebot3_manipulation_simulations</url>
   <url type="bugtracker">https://github.com/ROBOTIS-GIT/turtlebot3_manipulation_simulations/issues</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <!--  <buildtool_depend>catkin</buildtool_depend> --> 
+  <!-- ROS 2 uses a newer version of catkin, called ament_cmake, which we specify in the buildtool_depend tag: -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  
   <depend>controller_manager</depend>
   <depend>gazebo_ros</depend>
   <depend>xacro</depend>
   <depend>urdf</depend>
+  
+    
+  <!-- We also need to tell the build tool what kind of package we are, so that it knows how to build us. Because we’re using ament and CMake, we add the following lines to declare our build type to be ament_cmake: -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+  
 </package>

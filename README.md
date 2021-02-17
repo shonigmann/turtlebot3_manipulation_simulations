@@ -3,9 +3,7 @@
 <img src="https://github.com/ROBOTIS-GIT/emanual/blob/master/assets/images/platform/turtlebot3/manipulation/hardware_setup.png">
 
 ## ROS Packages for OpenManipulator with TurtleBot3
-|Version|Kinetic + Ubuntu Xenial|Melodic + Ubuntu Bionic|
-|:---:|:---:|:---:|
-|[![GitHub version](https://badge.fury.io/gh/ROBOTIS-GIT%2Fopen_manipulator_with_tb3_simulations.svg)](https://badge.fury.io/gh/ROBOTIS-GIT%2Fopen_manipulator_with_tb3_simulations)|[![Build Status](https://travis-ci.org/ROBOTIS-GIT/open_manipulator_with_tb3_simulations.svg?branch=kinetic-devel)](https://travis-ci.org/ROBOTIS-GIT/open_manipulator_with_tb3_simulations)|[![Build Status](https://travis-ci.org/ROBOTIS-GIT/open_manipulator_with_tb3_simulations.svg?branch=melodic-devel)](https://travis-ci.org/ROBOTIS-GIT/open_manipulator_with_tb3_simulations)|
+|Homebrew ROS2 Port for ROS2 Foxy on Ubuntu Focal 20.04|
 
 ## ROBOTIS e-Manual for OpenManipulator with TurtleBot3
 - [ROBOTIS e-Manual for OpenManipulator with TurtleBot3](http://emanual.robotis.com/docs/en/platform/turtlebot3/manipulation/#manipulation)
