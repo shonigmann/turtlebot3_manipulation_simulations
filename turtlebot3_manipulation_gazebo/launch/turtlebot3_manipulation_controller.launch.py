@@ -3,6 +3,7 @@ import launch.actions
 import launch.substitutions
 import launch_ros.actions
 import os
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
@@ -14,17 +15,17 @@ def generate_launch_description():
     arm_controller_node = launch_ros.actions.Node(
         package='controller_manager',
         name='arm_controller_spawner',
-        executable='controller_manager',
+        executable='ros2_control_node',
         parameters=[arm_yaml_path],
         arguments="spawn arm_controller",
-    )  # TODO: TEST
+    )  # TODO:   # TODO: Figure out how to pass robot_description (urdf or just filepath?)
     gripper_controller_node = launch_ros.actions.Node(
         package='controller_manager',
         name='gripper_controller_spawner',
-        executable='controller_manager',
+        executable='ros2_control_node',
         parameters=[gripper_yaml_path],
         arguments="spawn gripper_controller",
-    )  # TODO: TEST
+    )  # TODO:   # TODO: Figure out how to pass robot_description (urdf or just filepath?)
 
     ld.add_action(arm_controller_node)
     ld.add_action(gripper_controller_node)

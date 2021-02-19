@@ -2,6 +2,8 @@ import launch
 import launch.actions
 import launch.substitutions
 import launch_ros.actions
+import os
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
@@ -11,15 +13,15 @@ def generate_launch_description():
     node = launch_ros.actions.Node(
         package='controller_manager',
         name='joint_state_controller_spawner',
-        executable='controller_manager',
+        executable='ros2_control_node',
         parameters=[yaml_path],
         arguments="spawn joint_state_controller",
-    )  # TODO: TEST
+    )  # TODO: Figure out how to pass robot_description (urdf or just filepath?)
 
     ld.add_action(node)
 
     return ld
-#
+
 # <launch>
 #   <!-- start joint state controller -->
 #   <rosparam file="$(find turtlebot3_manipulation_gazebo)/config/joint_state_controller.yaml" command="load"/>
