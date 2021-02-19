@@ -82,9 +82,11 @@ def main():
 
     # Get path to the robot's sdf file
     if args.turtlebot_type is not None:
-        sdf_file_path = os.path.join(
-            get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models',
-            'turtlebot3_{}_manipulator'.format(args.turtlebot_type), 'model.sdf')
+        # sdf_file_path = os.path.join(
+        #     get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models',
+        #     'turtlebot3_{}_manipulator'.format(args.turtlebot_type), 'model.urdf')
+        sdf_file_path = '/home/blue-robotics/dev_ws/src/turtlebot3_manipulation_simulations/turtlebot3_manipulation_' \
+                        'gazebo/models/turtlebot3_waffle_manipulator/model.urdf'  # TODO: REVERT, just testing
     else:
         sdf_file_path = args.sdf
 
@@ -97,7 +99,7 @@ def main():
     for plugin in root.iter('plugin'):
         # TODO(orduno) Handle case if an sdf file from non-turtlebot is provided
         # TODO: see if turtlebot3_joint_state or gazebo_ros_control also require remapping...
-        if 'turtlebot3_diff_drive' in plugin.attrib.values() or 'gazebo_ros_control' in plugin.attrib.values():
+        if 'turtlebot3_diff_drive' in plugin.attrib.values():  #  or 'gazebo_ros_control' in plugin.attrib.values():
             # The only plugin we care for now is 'diff_drive' which is
             # broadcasting a transform between`odom` and `base_footprint`
             # break
