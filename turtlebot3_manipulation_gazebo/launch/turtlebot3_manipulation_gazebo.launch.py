@@ -1,38 +1,47 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, \
+    TimerAction
+# LogInfo
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution
+# , PythonExpression, TextSubstitution,
 from launch_ros.actions import Node
+from launch.event_handlers import OnProcessExit
+# import xacro
 
 
 def generate_launch_description():
     ld = LaunchDescription()
 
-    launch_dir = os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'launch')
-    model_dir = os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models')
+    pkg_dir = get_package_share_directory('turtlebot3_manipulation_gazebo')
+    launch_dir = os.path.join(pkg_dir, 'launch')
     tb3_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'worlds')
 
-    # TODO: add path to gazebo_ros2_control to plugin path for gazebo!
-    #  https://github.com/ros-simulation/gazebo_ros2_control
-    if os.getenv('GAZEBO_MODEL_PATH') is not None:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
-                                          get_package_share_directory('turtlebot3_manipulation_gazebo') + '/models' \
-                                          + os.pathsep + os.getenv('GAZEBO_MODEL_PATH')
-    else:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
-                                          get_package_share_directory('turtlebot3_manipulation_gazebo') + '/models'
+    # # TODO: add path to gazebo_ros2_control to plugin path for gazebo!
+    # #  https://github.com/ros-simulation/gazebo_ros2_control
+    # if os.getenv('GAZEBO_MODEL_PATH') is not None:
+    #     os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
+    #                                       pkg_dir + '/models' \
+    #                                       + os.pathsep + os.getenv('GAZEBO_MODEL_PATH')
+    # else:
+    #     os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
+    #                                       pkg_dir + '/models'
+    #
+    # if os.getenv('GAZEBO_PLUGIN_PATH') is not None:
+    #     os.environ['GAZEBO_PLUGIN_PATH'] = '/home/robo/dev_ws/build/gazebo_ros2_control' + \
+    #                                        os.pathsep + os.getenv('GAZEBO_PLUGIN_PATH')
+    # else:
+    #     os.environ['GAZEBO_PLUGIN_PATH'] = '/home/robo/dev_ws/build/gazebo_ros2_control'
 
-            #   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [waffle, waffle_pi]"/>
-    #   <arg name="gui" default="true"/>
-    #   <arg name="paused" default="true"/>
-    #   <arg name="use_sim_time" default="true"/>
-    launch_configs = {'model': [os.getenv('TURTLEBOT3_MODEL'), 'model type [waffle, waffle_pi]'],
+    launch_configs = {'urdf_path': [os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf',
+                                                 'turtlebot3_pi_manipulator.xacro'), 'Path to robot xacro, urdf, or sdf'],
                       # 'gui': ['True', ''],
                       'paused': ['True', ''],
                       'use_sim_time': ['True', ''],
+                      'robot_name': ['', 'robot'],
                       'namespace': ['', ''],
                       'use_namespace': ['False', ''],
                       'use_robot_state_pub': ['True', ''],
@@ -56,44 +65,12 @@ def generate_launch_description():
         launch_configs[c].append(LaunchConfiguration(c))
         ld.add_action(DeclareLaunchArgument(c, default_value=launch_configs[c][0], description=launch_configs[c][1]))
 
-    #   <rosparam file="$(find turtlebot3_manipulation_gazebo)/config/gazebo_controller.yaml" command="load"/>
-    gz_controller_yaml = os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'config',
+    gz_controller_yaml = os.path.join(pkg_dir, 'config',
                                       'gazebo_controller.yaml')
 
-    if os.getenv('GAZEBO_MODEL_PATH') is not None:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
-                                          get_package_share_directory('turtlebot3_manipulation_gazebo') + '/models' + \
-                                          os.pathsep + \
-                                          os.getenv('GAZEBO_MODEL_PATH')
-                                          # get_package_share_directory('spaceros_gazebo') + '/models' + os.pathsep + \
-    else:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('turtlebot3_gazebo') + '/models' + os.pathsep + \
-                                          get_package_share_directory('turtlebot3_manipulation_gazebo') + '/models'
-                                          # get_package_share_directory('spaceros_gazebo') + '/models' + os.pathsep + \
-
-
-    #   <!-- startup simulated world -->
-    #   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    #     <arg name="paused" value="$(arg paused)"/>
-    #     <arg name="gui" value="$(arg gui)"/>
-    #     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
-    #   </include>
-    #
-    # start_gazebo_server_cmd = ExecuteProcess(
-    #     condition=IfCondition(launch_configs['use_simulator'][2]),
-    #     cmd=['gzserver', '-s', 'libgazebo_ros_init.so', launch_configs['world'][2]],
-    #     output='screen')  # , cwd=[launch_dir],
-    #     # arguments=['-pause', launch_configs['paused'][2]])
-    #
-
-    start_gazebo_server_cmd = ExecuteProcess(
+    gazebo = ExecuteProcess(
         cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so', launch_configs['world'][2]],
         output='screen')
-
-    # start_gazebo_client_cmd = ExecuteProcess(
-    #     condition=IfCondition(PythonExpression([launch_configs['use_simulator'][2]])),
-    #     cmd=['gzclient'],
-    #     output='screen')  # cwd=[launch_dir],
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -103,10 +80,6 @@ def generate_launch_description():
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static')]
 
-    # TODO: Allow for "none" option (e.g. only the manipulator?)
-    urdf = os.path.join(model_dir, 'turtlebot3_waffle_manipulator', 'model.urdf')
-
-    # TODO: readd when working
     # start robot state publisher
     start_robot_state_publisher_cmd = Node(
         condition=IfCondition(launch_configs['use_robot_state_pub'][2]),
@@ -115,22 +88,21 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=launch_configs['namespace'][2],
         output='screen',
-        parameters=[{'use_sim_time': launch_configs['use_sim_time'][2]}],
+        parameters=[
+            {'use_sim_time': launch_configs['use_sim_time'][2]},
+            {'robot_description': Command(['xacro', ' ', launch_configs['urdf_path'][2], ' gazebo:=False'])}
+        ],
         remappings=remappings,
-        arguments=[urdf])
-
-    #   <!-- push robot_description to factory and spawn robot in gazebo -->
-    #   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    #     args="-urdf -param robot_description -model robot -x 0.0 -y 0.0 -Y 0.0 -J joint1 0.0 -J joint2 0.0 -J joint3 0.0 -J joint4 0.0 -J gripper 0.0 -J gripper_sub 0.0"/>
+    )
 
     spawn_model = Node(
         package='tb3_manipulation_gazebo_spawner',
         executable='tb3_manipulation_gazebo_spawner',
         output='screen',
         arguments=[
-            '--robot_name', launch_configs['model'][2],
+            '--robot_name', launch_configs['robot_name'][2],
             '--robot_namespace', launch_configs['namespace'][2],
-            '--turtlebot_type', launch_configs['model'][2],
+            '--urdf', launch_configs['urdf_path'][2],
             '-x', launch_configs['x_pose'][2],
             '-y', launch_configs['y_pose'][2],
             '-z', launch_configs['z_pose'][2],
@@ -143,18 +115,6 @@ def generate_launch_description():
             '-Gs', launch_configs['Gs_pose'][2],
             '-p', gz_controller_yaml])
 
-    # spawn_model = Node(
-    #         package='nav2_gazebo_spawner',
-    #         executable='nav2_gazebo_spawner',
-    #         output='screen',
-    #         arguments=[
-    #             '--robot_name', "waffle",
-    #             '--robot_namespace', "",
-    #             '--turtlebot_type', "waffle",
-    #             '-x', '0.0',
-    #             '-y', '0.0',
-    #             '-z', '0.0'])
-
     # NO LONGER NECESSARY WITH SPAWNER WORKAROUND... TODO: OR IS IT???
     #   <!-- send robot urdf to param server -->
     #   <include file="$(find turtlebot3_manipulation_description)/launch/turtlebot3_manipulation_upload.launch">
@@ -166,23 +126,61 @@ def generate_launch_description():
     #   <!-- run controllers -->
     #   <include file="$(find turtlebot3_manipulation_gazebo)/launch/turtlebot3_manipulation_controller.launch"/>
 
-    cmd_utils = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'controller_utils.launch.py')))     # TEST
+    # cmd_utils = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(os.path.join(launch_dir, 'controller_utils.launch.py')))  # TEST
+    #
+    # cmd_controller = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(os.path.join(launch_dir,
+    #                                                'turtlebot3_manipulation_controller.launch.py')))  # TEST
 
-    cmd_controller = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir,
-                                                   'turtlebot3_manipulation_controller.launch.py')))  # TEST
+    load_joint_state_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_start_controller', 'joint_state_controller'],
+        output='screen'
+    )
 
+    load_joint_trajectory_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_start_controller', 'joint_trajectory_controller'],
+        output='screen'
+    )
 
+    load_effort_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_start_controller', 'effort_controllers'],
+        output='screen'
+    )
+
+    # # TODO: RE-ADD?
+    # ld.add_action(RegisterEventHandler(event_handler=OnProcessExit(
+    #     target_action=gazebo,
+    #     on_exit=[spawn_model]
+    # )))
+    # ld.add_action(RegisterEventHandler(event_handler=OnProcessExit(
+    #     target_action=spawn_model,
+    #     on_exit=[load_joint_state_controller]
+    # )))
+    # ld.add_action(RegisterEventHandler(event_handler=OnProcessExit(
+    #     target_action=load_joint_state_controller,
+    #     on_exit=[load_joint_trajectory_controller, load_effort_controller]
+    # )))
 
     # add actions to launch description and return
-    ld.add_action(start_gazebo_server_cmd)
-    # ld.add_action(start_gazebo_client_cmd)
+    ld.add_action(gazebo)
     ld.add_action(start_robot_state_publisher_cmd)
-    ld.add_action(spawn_model)
-    #
+
+    ld.add_action(TimerAction(actions=[spawn_model], period=3.0))
+    # ld.add_action(spawn_model)
+
+    # for dbm in debug_msg:
+    #     ld.add_action(dbm)
+    # TODO: Determine if Timer Actions are needed... Also, review nav2_bringup and other examples to see how they are
+    #  doing staged launches of dependent nodes (e.g. robot_spawner after gz_factory)
+    # TODO: RE-ADD
+    # ld.add_action(TimerAction(actions=[load_joint_state_controller], period=1.0))
+    # ld.add_action(TimerAction(actions=[load_joint_trajectory_controller], period=2.0))
+    # ld.add_action(TimerAction(actions=[load_effort_controller], period=2.0))
+    # ld.add_action(load_joint_state_controller)
+    # ld.add_action(load_joint_trajectory_controller)
+    # ld.add_action(load_effort_controller)
+
     # ld.add_action(cmd_utils)
     # ld.add_action(cmd_controller)
     return ld
-
-

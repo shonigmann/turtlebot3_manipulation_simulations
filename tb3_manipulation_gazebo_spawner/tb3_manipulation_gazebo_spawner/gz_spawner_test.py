@@ -55,8 +55,12 @@ def main():
                              'controllers')  # TODO: do something with this...
     parser.add_argument('-k', '--timeout', type=float, default=10.0,
                         help="Seconds to wait. Block until the future is complete if negative. Don't wait if 0.")
-    parser.add_argument('-u', '--urdf', type=str,
-                       help="the path to the robot's model file (urdf)")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-t', '--turtlebot_type', type=str,
+                       choices=['none', 'waffle'])  # TODO: see if i can get just the manipulator spawned before trying to do both manipulator and robot   
+    group.add_argument('-s', '--sdf', type=str,
+                       help="the path to the robot's model file (sdf)")
 
     args, unknown = parser.parse_known_args()
 
@@ -77,27 +81,27 @@ def main():
         args.robot_name, args.robot_namespace, args.x, args.y, args.z, args.Y, args.J1, args.J2, args.J3, args.J4,
         args.G, args.Gs))
 
-    use_urdf = True
+    use_urdf = False
 
-    # # Get path to the robot's urdf file
-    # if args.turtlebot_type is not None:
-    #     # TODO: lets do everything with xacro if possible (may need separate files to include or exclude plugin calls)
-    #     description_path = os.path.join(
-    #         get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf',
-    #         'turtlebot3_pi_manipulator.gazebo.xacro'.format(args.turtlebot_type))
-    #
-    #     if os.path.exists(description_path):
-    #         use_urdf = True
-    #     else:
-    #         description_path = os.path.join(
-    #             get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models',
-    #             'turtlebot3_{}_manipulator'.format(args.turtlebot_type), 'model.urdf')
+    # Get path to the robot's sdf file
+    if args.turtlebot_type is not None:
+        # TODO: lets do everything with xacro if possible (may need separate files to include or exclude plugin calls)
+        description_path = os.path.join(
+            get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf',
+            'turtlebot3_{}_manipulator.gazebo.xacro'.format(args.turtlebot_type))
 
-    # else:
-    description_path = args.urdf
+        if os.path.exists(description_path):
+            use_urdf = True
+        else:
+            description_path = os.path.join(
+                get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models',
+                'turtlebot3_{}_manipulator'.format(args.turtlebot_type), 'model.urdf')
+
+    else:
+        description_path = args.sdf
 
     # We need to remap the transform (/tf) topic so each robot has its own.
-    # We do this by adding `ROS argument entries` to the urdf file for
+    # We do this by adding `ROS argument entries` to the sdf file for
     # each plugin broadcasting a transform. These argument entries provide the
     # remapping rule, i.e. /tf -> /<robot_id>/tf
     if use_urdf:

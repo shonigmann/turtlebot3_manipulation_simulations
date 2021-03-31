@@ -65,7 +65,7 @@ find_package(gazebo_ros_pkgs REQUIRED)
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(DIRECTORY config launch models
+install(DIRECTORY config launch models urdf
   DESTINATION share/${PROJECT_NAME}
 )
 
