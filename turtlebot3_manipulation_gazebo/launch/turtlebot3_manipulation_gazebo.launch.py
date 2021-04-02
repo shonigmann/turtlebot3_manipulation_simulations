@@ -78,6 +78,10 @@ def generate_launch_description():
         launch_configs[c].append(LaunchConfiguration(c))
         ld.add_action(DeclareLaunchArgument(c, default_value=launch_configs[c][0], description=launch_configs[c][1]))
 
+    # for the time being, universal gains are being used for all robots. Would need new approach/yaml files for
+    # heterogeneous control
+    # TODO: find out how namespace affects joint names in yaml (e.g. does the yaml file need /robot1/joint1 or is
+    #  joint1 sufficient
     gz_controller_yaml = os.path.join(pkg_dir, 'config',
                                       'gazebo_controller.yaml')
 
@@ -102,7 +106,7 @@ def generate_launch_description():
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
-            namespace='/' + robot['name'],  # TODO: see if '/' is required
+            namespace=robot['namespace'],  # TODO: see if '/' is required
             output='screen',
             parameters=[
                 {'use_sim_time': launch_configs['use_sim_time'][2]},
@@ -119,16 +123,16 @@ def generate_launch_description():
                 '--robot_name', robot['name'],
                 '--robot_namespace', robot['namespace'],
                 '--urdf', launch_configs['urdf_path'][2],
-                '-x', robot['x'],  # TODO: consider adding commandline interface value... or removing altogether
-                '-y', robot['y'],
-                '-z', robot['z'],
-                '-Y', launch_configs['Y_pose'][2],
-                '-J1', launch_configs['J1_pose'][2],
-                '-J2', launch_configs['J2_pose'][2],
-                '-J3', launch_configs['J3_pose'][2],
-                '-J4', launch_configs['J4_pose'][2],
-                '-G', launch_configs['G_pose'][2],
-                '-Gs', launch_configs['Gs_pose'][2],
+                '-x', str(robot['x_pose']),  # TODO: consider adding commandline interface value... or removing altogether
+                '-y', str(robot['y_pose']),
+                '-z', str(robot['z_pose']),
+                # '-Y', launch_configs['Y_pose'][2],
+                # '-J1', launch_configs['J1_pose'][2],
+                # '-J2', launch_configs['J2_pose'][2],
+                # '-J3', launch_configs['J3_pose'][2],
+                # '-J4', launch_configs['J4_pose'][2],
+                # '-G', launch_configs['G_pose'][2],
+                # '-Gs', launch_configs['Gs_pose'][2],
                 '-p', gz_controller_yaml])
         #   <!-- controller utils -->
         #   <include file="$(find turtlebot3_manipulation_gazebo)/launch/controller_utils.launch"/>
@@ -144,8 +148,6 @@ def generate_launch_description():
         #                                                'turtlebot3_manipulation_controller.launch.py')))  # TEST
 
         # add actions to launch description and return
-        ld.add_action(start_robot_state_publisher_cmd)
-        ld.add_action(TimerAction(actions=[spawn_model], period=2.0))
 
         load_joint_state_controller = ExecuteProcess(
             cmd=['ros2', 'control', 'load_start_controller', 'joint_state_controller'],
@@ -162,15 +164,19 @@ def generate_launch_description():
             output='screen'
         )
 
-        ld.add_action(RegisterEventHandler(event_handler=OnProcessExit(
-            target_action=spawn_model,
-            on_exit=[load_joint_state_controller]
-        )))
-        ld.add_action(RegisterEventHandler(event_handler=OnProcessExit(
-            target_action=load_joint_state_controller,
-            on_exit=[load_joint_trajectory_controller, load_effort_controller]
-        )))
-
+        # TODO: add group with things:
+        ld.add_action(GroupAction([
+            start_robot_state_publisher_cmd,
+            TimerAction(actions=[spawn_model], period=2.0),
+            RegisterEventHandler(event_handler=OnProcessExit(
+                target_action=spawn_model,
+                on_exit=[load_joint_state_controller]
+            )),
+            RegisterEventHandler(event_handler=OnProcessExit(
+                target_action=load_joint_state_controller,
+                on_exit=[load_joint_trajectory_controller, load_effort_controller]
+            ))
+        ]))
 
     # TODO: probably safe to remove these:
     # ld.add_action(cmd_utils)
