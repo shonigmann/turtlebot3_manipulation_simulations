@@ -37,7 +37,6 @@
     <origin xyz="0 0 0.010" rpy="0 0 0"/>
   </joint>
 
-
   <link name="wheel_left_link">
     <visual>
       <origin xyz="0 0 0" rpy="1.57 0 0"/>
@@ -93,9 +92,10 @@
     <child link="wheel_left_link"/>
     <origin xyz="0.0 0.144 0.023" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
-    <dynamics damping="0.2" friction="0.5"/>
+    <xacro:if value="$(arg gazebo)">
+      <dynamics damping="0.2" friction="0.5"/>
+    </xacro:if>
   </joint>
-
 
   <link name="wheel_right_link">
     <visual>
@@ -152,7 +152,9 @@
     <child link="wheel_right_link"/>
     <origin xyz="0.0 -0.144 0.023" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
-    <dynamics damping="0.2" friction="0.5"/>
+    <xacro:if value="$(arg gazebo)">
+      <dynamics damping="0.2" friction="0.5"/>
+    </xacro:if>
   </joint>
 
 
@@ -236,10 +238,10 @@
       <child link="caster_back_right_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
-      <dynamics damping="0.1" friction="0.2"/>
+     <dynamics damping="0.1" friction="0.2"/>
     </joint>
-
   </xacro:if>
+
   <xacro:if value="${not $(arg gazebo)}">
     <joint name="caster_back_right_joint" type="fixed">
       <parent link="base_link"/>
@@ -332,8 +334,8 @@
       <axis xyz="0 0 1"/>
       <dynamics damping="0.1" friction="0.2"/>
     </joint>
-
   </xacro:if>
+
   <xacro:if value="${not $(arg gazebo)}">
     <joint name="caster_back_left_joint" type="fixed">
       <parent link="base_link"/>

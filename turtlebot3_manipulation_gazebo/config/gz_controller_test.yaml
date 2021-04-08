@@ -1,0 +1,47 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    joint_state_controller:
+      type: joint_state_controller/JointStateController
+
+    effort_controllers:
+      type: effort_controllers/JointGroupEffortController
+
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - manipulator::joint1
+      - manipulator::joint2
+      - manipulator::joint3
+      - manipulator::joint4
+    interface_name: position
+
+effort_controllers:
+  ros__parameters:
+    joints:
+      - manipulator::gripper
+      - manipulator::gripper_sub
+    interface_name: position
+
+# TODO: identify where to set constraints, tolerances, goal times, gains, limits
+
+# TODO: consider adding limits to jerk and acceleration here: URDF does not support acceleration or jerk limits,
+#       so they need to be defined in yaml if desired
+
+#joint_limits:
+#  jointX:
+#    has_position_limits: true
+#    min_position: 0.0
+#    max_position: 1.0
+#    has_velocity_limits: true
+#    max_velocity: 2.0
+#    has_acceleration_limits: true
+#    max_acceleration: 5.0
+#    has_jerk_limits: true
+#    max_jerk: 100.0
+#    has_effort_limits: true
+#    max_effort: 5.0
