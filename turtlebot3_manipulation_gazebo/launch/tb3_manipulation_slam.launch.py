@@ -63,14 +63,22 @@ def generate_launch_description():
     # gz_controller_yaml = os.path.join(pkg_dir, 'config',
     #                                   'gazebo_controller.yaml')
 
-    gazebo = ExecuteProcess(
-        cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so', launch_configs['world'][2]],
-        output='screen')
+    # gazebo = ExecuteProcess(
+    #     cmd=['gazebo', '--verbose', '--pause', '-s', 'libgazebo_ros_factory.so', launch_configs['world'][2]],
+    #     output='screen')
 
-    # gazebo = IncludeLaunchDescription(
-    #             PythonLaunchDescriptionSource([os.path.join(
-    #                 get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-    #          )
+    gzserver = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gzserver.launch.py']),
+        launch_arguments=[('verbose', 'True'),
+                          ('pause', 'True'),
+                          ('world', launch_configs['world'][2])]
+    )
+    gzclient = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gzclient.launch.py']),
+        launch_arguments=[('verbose', 'True')]
+    )
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -163,16 +171,20 @@ def generate_launch_description():
         ]
     )
 
+    unpause_sim = ExecuteProcess(cmd=['ros2', 'service', 'call', '/unpause_physics', 'std_srvs/srv/Empty'],
+                                 output='screen')
+
     actions = [
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=spawn_model,
-            on_exit=[load_joint_state_controller]  # , load_rviz, load_nav2]
+            on_exit=[load_joint_state_controller, load_rviz, load_nav2, unpause_sim]
         )),
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=load_joint_state_controller,
             on_exit=[load_joint_trajectory_controller, load_effort_controller]
         )),
-        gazebo,
+        gzserver,
+        gzclient,
         start_robot_state_publisher_cmd,
         spawn_model,
     ]
