@@ -21,6 +21,9 @@ import xacro
 from ament_index_python.packages import get_package_share_directory
 from gazebo_msgs.srv import SpawnEntity
 import rclpy
+from scipy.spatial.transform import Rotation
+
+import subprocess
 
 
 def main():
@@ -57,6 +60,8 @@ def main():
                         help="Seconds to wait. Block until the future is complete if negative. Don't wait if 0.")
     parser.add_argument('-u', '--urdf', type=str,
                        help="the path to the robot's model file (urdf)")
+    parser.add_argument('-a', '--xacro_args', type=str,
+                       help="xacro arguments to set in the document call")
 
     args, unknown = parser.parse_known_args()
 
@@ -79,21 +84,6 @@ def main():
 
     use_urdf = True
 
-    # # Get path to the robot's urdf file
-    # if args.turtlebot_type is not None:
-    #     # TODO: lets do everything with xacro if possible (may need separate files to include or exclude plugin calls)
-    #     description_path = os.path.join(
-    #         get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf',
-    #         'turtlebot3_pi_manipulator.gazebo.xacro'.format(args.turtlebot_type))
-    #
-    #     if os.path.exists(description_path):
-    #         use_urdf = True
-    #     else:
-    #         description_path = os.path.join(
-    #             get_package_share_directory('turtlebot3_manipulation_gazebo'), 'models',
-    #             'turtlebot3_{}_manipulator'.format(args.turtlebot_type), 'model.urdf')
-
-    # else:
     description_path = args.urdf
 
     # We need to remap the transform (/tf) topic so each robot has its own.
@@ -101,8 +91,19 @@ def main():
     # each plugin broadcasting a transform. These argument entries provide the
     # remapping rule, i.e. /tf -> /<robot_id>/tf
     if use_urdf:
-        root = ET.fromstring(xacro.process_file(description_path).toxml())
-        print("Parsing Robot Description from Xacro!")
+        # This doesn't allow for the necessary xacro arg inputs
+        # root = ET.fromstring(xacro.process_file(description_path).toxml())
+
+        # new method using xacro cli
+        xml_string = subprocess.check_output('xacro ' + description_path + ' ' + args.xacro_args, shell=True)
+        root = ET.fromstring(xml_string)
+
+        # with open('/home/robo/.gazebo/models/test/roslaunch_test.urdf', 'w') as f:
+        #     print('writing urdf file for review!')
+        #     temp = xacro.process_file(description_path).toxml()
+        #     print(temp.__class__())
+        #     f.write(temp)
+        # print("Parsing Robot Description from Xacro!")
     else:
         tree = ET.parse(description_path)
         root = tree.getroot()
@@ -110,15 +111,16 @@ def main():
 
     for plugin in root.iter('plugin'):
         # TODO(orduno) Handle case if an sdf file from non-turtlebot is provided
-        # TODO: see if turtlebot3_joint_state or gazebo_ros_control also require remapping...
+        # TODO: see if turtlebot3_joint_state, gazebo_ros_control, etc also require remapping...
         if 'turtlebot3_diff_drive' in plugin.attrib.values():  # or 'gazebo_ros_control' in plugin.attrib.values():
             # The only plugin we care for now is 'diff_drive' which is
             # broadcasting a transform between`odom` and `base_footprint`
-            # break
-
-            ros_params = plugin.find('ros')
-            ros_tf_remap = ET.SubElement(ros_params, 'remapping')
-            ros_tf_remap.text = '/tf:=/' + args.robot_namespace + '/tf'
+            # TODO: VERIFY WHEN USING NAMESPACES! WITHOUT NAMESPACE, THIS SEEMS TO BREAK THE PLUGIN
+            if args.robot_namespace is not None and args.robot_namespace != '':
+                ros_params = plugin.find('ros')
+                ros_tf_remap = ET.SubElement(ros_params, 'remapping')
+                ros_tf_remap.text = '/tf:=/' + args.robot_namespace + '/tf'
+            break
 
     # Set data for request
     request = SpawnEntity.Request()
@@ -130,8 +132,19 @@ def main():
     request.initial_pose.position.y = float(args.y)
     request.initial_pose.position.z = float(args.z)
 
-    # TODO: add support for robot's initial yaw
-    # request.initial_pose.orientation.x,y,z,w = ...
+    # CONVERT DESIRED YAW TO QUATERNION:
+    eul_r = 0.0
+    eul_p = 0.0
+    eul_y = args.Y
+
+    rot = Rotation.from_euler('xyz', [eul_r, eul_p, eul_y], degrees=False)
+    quat = rot.as_quat()
+
+    request.initial_pose.orientation.x = quat[0]
+    request.initial_pose.orientation.y = quat[1]
+    request.initial_pose.orientation.z = quat[2]
+    request.initial_pose.orientation.w = quat[3]
+
     # TODO: could also add urdf modifications to allow for initial joint angles to be set and control gains to be set
     
     node.get_logger().info('Sending service request to `/spawn_entity`')
