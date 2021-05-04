@@ -4,6 +4,9 @@
 
   <!--  if gazebo=True, enable SDF specific tags  -->
   <xacro:arg name="gazebo" default="True"/>
+  <xacro:arg name="offroad_turtlebot" default="False"/>
+  <xacro:arg name="flashlight" default="False"/>
+  <xacro:property name="sf" value="2.0"/>
 
   <xacro:if value="$(arg gazebo)">
     <gazebo reference="base_link">
@@ -177,12 +180,24 @@
         <right_joint>wheel_right_joint</right_joint>
 
         <!-- kinematics -->
-        <wheel_separation>0.287</wheel_separation>
-        <wheel_diameter>0.066</wheel_diameter>
 
-        <!-- limits -->
-        <max_wheel_torque>20</max_wheel_torque>
-        <max_wheel_acceleration>1.0</max_wheel_acceleration>
+        <xacro:if value="$(arg offroad_turtlebot)">
+          <wheel_separation>0.287</wheel_separation>
+          <wheel_diameter>${sf*0.066}</wheel_diameter>
+
+          <!-- limits -->
+          <max_wheel_torque>${sf*20}</max_wheel_torque>
+          <max_wheel_acceleration>1.0</max_wheel_acceleration>
+        </xacro:if>
+
+        <xacro:if value="${not $(arg offroad_turtlebot)}">
+          <wheel_separation>0.287</wheel_separation>
+          <wheel_diameter>0.066</wheel_diameter>
+
+          <!-- limits -->
+          <max_wheel_torque>20</max_wheel_torque>
+          <max_wheel_acceleration>1.0</max_wheel_acceleration>
+        </xacro:if>
 
         <command_topic>cmd_vel</command_topic>
         <!-- output -->
@@ -208,6 +223,83 @@
       </plugin>
     </gazebo>
 
-  </xacro:if>
 
+    <xacro:if value="$(arg flashlight)">
+      <!--    create links to attack flashlights to-->
+      <link name="flashlight_1"/>
+      <link name="flashlight_2"/>
+
+      <joint name="flashlight_joint_1" type="fixed">
+        <parent link="base_link"/>
+        <child link="flashlight_1"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </joint>
+      <joint name="flashlight_joint_2" type="fixed">
+        <parent link="base_link"/>
+        <child link="flashlight_2"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </joint>
+
+      <gazebo reference="flashlight_1">
+        <light name="light_1" type="spot">
+          <cast_shadows>1</cast_shadows>
+          <intensity>1</intensity>
+          <diffuse>1 1 1 1</diffuse>
+          <specular>.5 .5 .5 1 </specular>
+          <attenuation>
+            <range>20</range>
+            <linear>1</linear>
+            <constant>1</constant>
+            <quadratic>0</quadratic>
+          </attenuation>
+          <direction>0 0 -1</direction>
+          <spot>
+            <inner_angle>0.8</inner_angle>
+            <outer_angle>0.8</outer_angle>
+            <falloff>1</falloff>
+          </spot>
+          <pose>0 -0.1 0.125 0 -1.5 -0.2</pose>
+        </light>
+        <plugin name='light_control' filename='libFlashLightPlugin.so'>
+          <enable>true</enable>
+          <light>
+            <id>flashlight_1/light_1</id>
+            <color>1 1 1</color>
+            <duration>1</duration>
+            <interval>0.5</interval>
+          </light>
+        </plugin>
+      </gazebo>
+      <gazebo reference="flashlight_2">
+        <light name="light_2" type="spot">
+          <cast_shadows>1</cast_shadows>
+          <intensity>1</intensity>
+          <diffuse>1 1 1 1</diffuse>
+          <specular>.5 .5 .5 1 </specular>
+          <attenuation>
+            <range>20</range>
+            <linear>1</linear>
+            <constant>1</constant>
+            <quadratic>0</quadratic>
+          </attenuation>
+          <direction>0 0 -1</direction>
+          <spot>
+            <inner_angle>0.8</inner_angle>
+            <outer_angle>0.8</outer_angle>
+            <falloff>1</falloff>
+          </spot>
+          <pose>0 0.1 0.125 0.0 -1.5 0.2</pose>
+        </light>
+        <plugin name='light_control' filename='libFlashLightPlugin.so'>
+          <enable>true</enable>
+          <light>
+            <id>flashlight_2/light_2</id>
+            <color>1 1 1</color>
+            <duration>1</duration>
+            <interval>0.5</interval>
+          </light>
+        </plugin>
+      </gazebo>
+    </xacro:if>
+  </xacro:if>
 </robot>

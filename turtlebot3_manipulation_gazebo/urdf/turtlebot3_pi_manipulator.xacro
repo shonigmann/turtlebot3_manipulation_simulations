@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <robot name="turtlebot3_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- For "terrain" simulations environments -->
+  <xacro:arg name="offroad_turtlebot" default="False"/>
 
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find open_manipulator_x_description)/urdf/materials.xacro" />

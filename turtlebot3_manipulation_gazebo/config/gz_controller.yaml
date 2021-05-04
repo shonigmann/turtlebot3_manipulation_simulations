@@ -25,7 +25,7 @@ effort_controllers:
     joints:
       - gripper
       - gripper_sub
-    interface_name: position
+    interface_name: effort
 
 # TODO: identify where to set constraints, tolerances, goal times, gains, limits
 

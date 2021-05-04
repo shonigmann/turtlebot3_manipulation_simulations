@@ -12,14 +12,20 @@ from launch.event_handlers import OnProcessExit
 
 def generate_launch_description():
 
+    xacro_args = ' offroad_turtlebot:=True run_arm_control:=False flashlight:=True'
+
     ld = LaunchDescription()
 
     # Get relevant system paths
     pkg_dir = get_package_share_directory('turtlebot3_manipulation_gazebo')
-    # launch_dir = os.path.join(pkg_dir, 'launch')
+    apriltag_dir = get_package_share_directory('apriltag_ros')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
+    nav2_system_test_dir = get_package_share_directory('nav2_system_tests')
     nav2_bringup_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
-    world_dir = os.path.join(nav2_bringup_dir, 'worlds')
+
+    spaceros_dir = get_package_share_directory('spaceros_gazebo')
+    world_path = os.path.join(spaceros_dir, 'worlds', 'turtlebot_world', 'turtlebot_world.world')
+
     rviz_config_file = os.path.join(nav2_bringup_dir, 'rviz', 'nav2_default_view.rviz')
     map_yaml_file = os.path.join(nav2_bringup_dir, 'maps', 'turtlebot3_world.yaml')
     nav_params_file = os.path.join(nav2_bringup_dir, 'params', 'nav2_params.yaml')
@@ -31,14 +37,12 @@ def generate_launch_description():
         'urdf_path': [os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf',
                                    'turtlebot3_pi_manipulator.xacro'), 'Path to robot xacro or urdf'],
         'gui': ['True', ''],
-        # 'paused': ['True', ''],
         'use_sim_time': ['True', ''],
         'use_robot_state_pub': ['True', ''],
         'use_rviz': ['True', ''],
         'run_slam': ['True', ''],
         'use_simulator': ['True', 'Whether to start the simulator'],
-        'world': [os.path.join(world_dir, 'world_only.model'),
-                  'Full path to world model file to load'],
+        'world': [world_path, 'Full path to world model file to load'],
         'x_pose': ['0.5', 'Initial x position of the robot'],
         'y_pose': ['0.0', 'Initial y position of the robot'],
         'z_pose': ['0.0', 'Initial z position of the robot'],
@@ -53,19 +57,12 @@ def generate_launch_description():
         ld.add_action(DeclareLaunchArgument(c, default_value=launch_configs[c][0], description=launch_configs[c][1]))
 
     if os.getenv('GAZEBO_MODEL_PATH') is not None:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('nav2_system_tests') + '/models' + os.pathsep + \
-                                          pkg_dir + '/models' \
-                                          + os.pathsep + os.getenv('GAZEBO_MODEL_PATH')
+        os.environ['GAZEBO_MODEL_PATH'] = os.path.join(nav2_system_test_dir, '/models', os.pathsep,
+                                                       spaceros_dir, '/models', os.pathsep,
+                                                       os.getenv('GAZEBO_MODEL_PATH'))
     else:
-        os.environ['GAZEBO_MODEL_PATH'] = get_package_share_directory('nav2_system_tests') + '/models' + os.pathsep + \
-                                          pkg_dir + '/models'
-
-    # gz_controller_yaml = os.path.join(pkg_dir, 'config',
-    #                                   'gazebo_controller.yaml')
-
-    # gazebo = ExecuteProcess(
-    #     cmd=['gazebo', '--verbose', '--pause', '-s', 'libgazebo_ros_factory.so', launch_configs['world'][2]],
-    #     output='screen')
+        os.environ['GAZEBO_MODEL_PATH'] = os.path.join(nav2_system_test_dir, '/models', os.pathsep,
+                                                       spaceros_dir, '/models', os.pathsep)
 
     gzserver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -88,9 +85,6 @@ def generate_launch_description():
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static')]
 
-    # TODO: TESTING
-    # urdf = os.path.join(get_package_share_directory('turtlebot3_manipulation_gazebo'), 'urdf', 'test_nogazebo.urdf')
-
     # start robot state publisher
     start_robot_state_publisher_cmd = Node(
         condition=IfCondition(launch_configs['use_robot_state_pub'][2]),
@@ -102,10 +96,8 @@ def generate_launch_description():
         parameters=[
             {'use_sim_time': launch_configs['use_sim_time'][2]},
             {'robot_description': Command(['xacro ',
-                                           # urdf,  #  TODO TESTING
                                            launch_configs['urdf_path'][2],
-                                           ' gazebo:=False',
-                                           ' run_arm_control:=False'])}
+                                           ' gazebo:=True ' + xacro_args])}
         ],
         remappings=remappings,
         arguments=['--log-level', launch_configs['log_level'][2]]
@@ -122,10 +114,11 @@ def generate_launch_description():
             '-x', launch_configs['x_pose'][2],
             '-y', launch_configs['y_pose'][2],
             '-z', launch_configs['z_pose'][2],
-            # '--xacro-args', ' gazebo:=True run_arm_control:=True',
-            # '-Y', launch_configs['Y_pose'][2],
+            '--xacro-args', ' gazebo:=True run_arm_control:=True offroad_turtlebot:=True',
+            '-Y', launch_configs['Y_pose'][2],
             # '-p', gz_controller_yaml]),
             '--log-level', launch_configs['log_level'][2],
+            '--xacro_args', ' gazebo:=True ' + xacro_args
         ]
     )
 
@@ -171,13 +164,37 @@ def generate_launch_description():
         ]
     )
 
+    # April Tag
+    load_apriltag = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(apriltag_dir, 'launch', 'tag_25h9_all.launch.py'))
+    )
+
+    # TODO: write node that randomly places AR cubes in the environment; being able to customize the size and modify
+    #  the apriltag launch config and the urdf would be nice
+
+    # TODO: write node that:
+    #  load_commander = Node(
+    #         package='spaceros_demo',
+    #         executable='tb3m_commander',
+    #         name='tb3m_commander',
+    #         output='screen',
+    #         remappings=remappings,
+    #         arguments=['--log-level', launch_configs['log_level'][2]]
+    #     )
+    #  A) explores the environment, within some radius of the starting point
+    #  B) listens for apriltag detections
+    #  C) navigates to object when it is detected
+    #  D) attempts to pickup the object once it is in the correct position
+    #  D) navigates to bin
+    #  E) places block in bin
+
     unpause_sim = ExecuteProcess(cmd=['ros2', 'service', 'call', '/unpause_physics', 'std_srvs/srv/Empty'],
                                  output='screen')
 
     actions = [
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=spawn_model,
-            on_exit=[load_joint_state_controller, load_rviz, load_nav2, unpause_sim]
+            on_exit=[load_joint_state_controller, load_rviz, load_nav2, unpause_sim, load_apriltag]
         )),
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=load_joint_state_controller,

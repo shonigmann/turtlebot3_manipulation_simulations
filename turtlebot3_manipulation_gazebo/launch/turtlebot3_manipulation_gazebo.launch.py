@@ -109,12 +109,13 @@ def generate_launch_description():
             condition=IfCondition(launch_configs['use_robot_state_pub'][2]),
             package='robot_state_publisher',
             executable='robot_state_publisher',
-            name='robot_state_publisher ',  # _{}'.format(robot['name']),  TODO: SEE IF NODE NEEDS UNIQUE NAME OR IF GROUP ADDS NAMESPACE
+            name='robot_state_publisher',  # _{}'.format(robot['name']),  TODO: SEE IF NODE NEEDS UNIQUE NAME OR IF GROUP ADDS NAMESPACE
             namespace=robot['namespace'],  # TODO: see if '/' is required
             output='screen',
             parameters=[
                 {'use_sim_time': launch_configs['use_sim_time'][2]},
-                {'robot_description': Command(['xacro', ' ', launch_configs['urdf_path'][2], ' gazebo:=False'])}
+                {'robot_description': Command(['xacro', ' ', launch_configs['urdf_path'][2], ' gazebo:=False '
+                                                                                             'offroad_turtlebot:=True'])}
             ],
             remappings=remappings,
         )  # TODO: consider supporting heterogeneous robot groups, changing urdf path in robots instead of in configs
