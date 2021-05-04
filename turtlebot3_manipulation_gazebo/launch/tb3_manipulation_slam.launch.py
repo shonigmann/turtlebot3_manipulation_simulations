@@ -12,7 +12,7 @@ from launch.event_handlers import OnProcessExit
 
 def generate_launch_description():
 
-    xacro_args = ' offroad_turtlebot:=True run_arm_control:=False flashlight:=True'
+    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 run_arm_control:=False flashlight:=True'
 
     ld = LaunchDescription()
 
@@ -45,7 +45,7 @@ def generate_launch_description():
         'world': [world_path, 'Full path to world model file to load'],
         'x_pose': ['0.5', 'Initial x position of the robot'],
         'y_pose': ['0.0', 'Initial y position of the robot'],
-        'z_pose': ['0.0', 'Initial z position of the robot'],
+        'z_pose': ['0.1', 'Initial z position of the robot'],
         'Y_pose': ['0.0', 'Initial Y position of the robot'],
         'use_namespace': ['False', 'Whether or not to apply a namespace to the navigation stack'],
         'namespace': ['', 'Top-level navigation stack namespace'],
