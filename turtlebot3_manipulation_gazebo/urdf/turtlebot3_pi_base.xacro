@@ -5,7 +5,8 @@
   <!--  if gazebo=True, enable SDF specific tags  -->
   <xacro:arg name="gazebo" default="True"/>
   <xacro:arg name="offroad_turtlebot" default="False"/>
-  <xacro:property name="sf" value="2.0"/>
+  <xacro:arg name="scale_factor" default="1.0"/>
+  <xacro:property name="sf" value="$(arg scale_factor)"/>
 
   <!--  Begin Model Description  -->
   <link name="base_footprint"/>
@@ -39,7 +40,7 @@
     <origin xyz="0 0 0.010" rpy="0 0 0"/>
   </joint>
 
-<!--        TODO: SCALE WHEELS TO MAKE THEM "ALL TERRAIN" -->
+
   <xacro:if value="$(arg offroad_turtlebot)">
     <link name="wheel_left_link">
       <visual>

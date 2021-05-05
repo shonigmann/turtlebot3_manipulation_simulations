@@ -5,8 +5,9 @@
   <!--  if gazebo=True, enable SDF specific tags  -->
   <xacro:arg name="gazebo" default="True"/>
   <xacro:arg name="offroad_turtlebot" default="False"/>
+  <xacro:arg name="scale_factor" default="1.0"/>
+  <xacro:property name="sf" value="$(arg scale_factor)"/>
   <xacro:arg name="flashlight" default="False"/>
-  <xacro:property name="sf" value="2.0"/>
 
   <xacro:if value="$(arg gazebo)">
     <gazebo reference="base_link">
@@ -242,6 +243,7 @@
 
       <gazebo reference="flashlight_1">
         <light name="light_1" type="spot">
+          <visualize>0</visualize>
           <cast_shadows>1</cast_shadows>
           <intensity>1</intensity>
           <diffuse>1 1 1 1</diffuse>
@@ -272,6 +274,7 @@
       </gazebo>
       <gazebo reference="flashlight_2">
         <light name="light_2" type="spot">
+          <visualize>0</visualize>
           <cast_shadows>1</cast_shadows>
           <intensity>1</intensity>
           <diffuse>1 1 1 1</diffuse>

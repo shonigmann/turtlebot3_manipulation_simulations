@@ -17,6 +17,7 @@
     <xacro:include filename="$(find open_manipulator_x_description)/urdf/open_manipulator_x.urdf.xacro"/>
     <xacro:include filename="$(find open_manipulator_x_description)/urdf/open_manipulator_x.transmission.xacro"/>
     <xacro:include filename="$(find open_manipulator_x_description)/urdf/open_manipulator_x.gazebo.xacro"/>
+    <xacro:include filename="$(find open_manipulator_x_description)/urdf/open_manipulator_x.controller.xacro"/>
 
     <!-- TURTLEBOT-OPEN MANIPULATOR JOINT  -->
     <joint name="base_to_link1" type="fixed">
