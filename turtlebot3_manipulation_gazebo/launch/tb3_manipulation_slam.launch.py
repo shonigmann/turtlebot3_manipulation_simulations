@@ -12,7 +12,7 @@ from launch.event_handlers import OnProcessExit
 
 def generate_launch_description():
 
-    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 run_arm_control:=False flashlight:=True'
+    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 flashlight:=True'
 
     ld = LaunchDescription()
 
@@ -118,7 +118,7 @@ def generate_launch_description():
             '-Y', launch_configs['Y_pose'][2],
             # '-p', gz_controller_yaml]),
             '--log-level', launch_configs['log_level'][2],
-            '--xacro_args', ' gazebo:=True ' + xacro_args
+            '--xacro_args', ' gazebo:=True run_arm_control:=True ' + xacro_args
         ]
     )
 
