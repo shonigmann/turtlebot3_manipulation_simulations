@@ -12,9 +12,10 @@ from launch.event_handlers import OnProcessExit
 
 def generate_launch_description():
 
-    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 flashlight:=True'
+    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 flashlight:=False'
 
     ld = LaunchDescription()
+
     # Get relevant system paths
     pkg_dir = get_package_share_directory('turtlebot3_manipulation_gazebo')
     apriltag_dir = get_package_share_directory('apriltag_ros')
@@ -23,7 +24,7 @@ def generate_launch_description():
     nav2_bringup_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
 
     spaceros_dir = get_package_share_directory('spaceros_gazebo')
-    world_path = os.path.join(spaceros_dir, 'worlds', 'turtlebot_world', 'turtlebot_world.world')
+    world_path = os.path.join(spaceros_dir, 'worlds', 'moon_demo', 'dem_570x606km.world')
 
     rviz_config_file = os.path.join(nav2_bringup_dir, 'rviz', 'nav2_default_view.rviz')
     map_yaml_file = os.path.join(nav2_bringup_dir, 'maps', 'turtlebot3_world.yaml')
@@ -42,9 +43,9 @@ def generate_launch_description():
         'run_slam': ['True', ''],
         'use_simulator': ['True', 'Whether to start the simulator'],
         'world': [world_path, 'Full path to world model file to load'],
-        'x_pose': ['0.5', 'Initial x position of the robot'],
-        'y_pose': ['0.0', 'Initial y position of the robot'],
-        'z_pose': ['0.1', 'Initial z position of the robot'],
+        'x_pose': ['-2.5', 'Initial x position of the robot'],
+        'y_pose': ['-2.0', 'Initial y position of the robot'],
+        'z_pose': ['3.7', 'Initial z position of the robot'],
         'Y_pose': ['0.0', 'Initial Y position of the robot'],
         'use_namespace': ['False', 'Whether or not to apply a namespace to the navigation stack'],
         'namespace': ['', 'Top-level navigation stack namespace'],
