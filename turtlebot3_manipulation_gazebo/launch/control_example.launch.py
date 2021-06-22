@@ -63,7 +63,7 @@ def generate_launch_description():
             {'use_sim_time': launch_configs['use_sim_time'][2]},
             {'robot_description': Command(['xacro ',
                                            launch_configs['urdf_path'][2],
-                                           ' gazebo:=True run_arm_control:=True ' + xacro_args])}
+                                           ' gazebo:=True run_arm_control:=True '])}
         ],
         remappings=remappings,
         arguments=['--log-level', launch_configs['log_level'][2]]
