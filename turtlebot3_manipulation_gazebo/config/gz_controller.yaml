@@ -5,9 +5,9 @@ controller_manager:
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-    joint_state_controller:
-      type: joint_state_controller/JointStateController
-
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      
     effort_controllers:
       type: effort_controllers/JointGroupEffortController
 
@@ -19,6 +19,11 @@ joint_trajectory_controller:
       - joint3
       - joint4
     interface_name: position
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
 
 effort_controllers:
   ros__parameters:
@@ -26,6 +31,12 @@ effort_controllers:
       - gripper
       - gripper_sub
     interface_name: effort
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+      - effort
 
 # TODO: identify where to set constraints, tolerances, goal times, gains, limits
 
