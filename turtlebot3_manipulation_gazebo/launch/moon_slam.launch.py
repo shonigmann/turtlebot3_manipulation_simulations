@@ -12,18 +12,19 @@ from launch.event_handlers import OnProcessExit
 
 def generate_launch_description():
 
-    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 flashlight:=True'
+    xacro_args = ' offroad_turtlebot:=True scale_factor:=2.0 flashlight:=False'
 
     ld = LaunchDescription()
+
     # Get relevant system paths
     pkg_dir = get_package_share_directory('turtlebot3_manipulation_gazebo')
-    # apriltag_dir = get_package_share_directory('apriltag_ros')
+    apriltag_dir = get_package_share_directory('apriltag_ros')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     nav2_system_test_dir = get_package_share_directory('nav2_system_tests')
     nav2_bringup_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
 
-    #spaceros_dir = get_package_share_directory('spaceros_gazebo')
-    #world_path = os.path.join(spaceros_dir, 'worlds', 'turtlebot_world', 'turtlebot_world.world')
+    spaceros_dir = get_package_share_directory('spaceros_gazebo')
+    world_path = os.path.join(spaceros_dir, 'worlds', 'moon_demo', 'dem_570x606km.world')
 
     rviz_config_file = os.path.join(nav2_bringup_dir, 'rviz', 'nav2_default_view.rviz')
     map_yaml_file = os.path.join(nav2_bringup_dir, 'maps', 'turtlebot3_world.yaml')
@@ -41,10 +42,10 @@ def generate_launch_description():
         'use_rviz': ['True', ''],
         'run_slam': ['True', ''],
         'use_simulator': ['True', 'Whether to start the simulator'],
-       # 'world': [world_path, 'Full path to world model file to load'],
-        'x_pose': ['0.5', 'Initial x position of the robot'],
-        'y_pose': ['0.0', 'Initial y position of the robot'],
-        'z_pose': ['0.1', 'Initial z position of the robot'],
+        'world': [world_path, 'Full path to world model file to load'],
+        'x_pose': ['-2.5', 'Initial x position of the robot'],
+        'y_pose': ['-2.0', 'Initial y position of the robot'],
+        'z_pose': ['3.7', 'Initial z position of the robot'],
         'Y_pose': ['0.0', 'Initial Y position of the robot'],
         'use_namespace': ['False', 'Whether or not to apply a namespace to the navigation stack'],
         'namespace': ['', 'Top-level navigation stack namespace'],
@@ -57,19 +58,18 @@ def generate_launch_description():
 
     if os.getenv('GAZEBO_MODEL_PATH') is not None:
         os.environ['GAZEBO_MODEL_PATH'] = os.path.join(nav2_system_test_dir, '/models', os.pathsep,
-                                                       #spaceros_dir, '/models', os.pathsep,
+                                                       spaceros_dir, '/models', os.pathsep,
                                                        os.getenv('GAZEBO_MODEL_PATH'))
     else:
         os.environ['GAZEBO_MODEL_PATH'] = os.path.join(nav2_system_test_dir, '/models', os.pathsep,
-                                                       #spaceros_dir, '/models', os.pathsep)
-							)
+                                                       spaceros_dir, '/models', os.pathsep)
+
     gzserver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('gazebo_ros'), 'launch'), '/gzserver.launch.py']),
         launch_arguments=[('verbose', 'True'),
                           ('pause', 'True'),
-                          #('world', launch_configs['world'][2])
-                          ]
+                          ('world', launch_configs['world'][2])]
     )
     gzclient = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -164,9 +164,9 @@ def generate_launch_description():
     )
 
     # April Tag
-    #load_apriltag = IncludeLaunchDescription(
-    #    PythonLaunchDescriptionSource(os.path.join(apriltag_dir, 'launch', 'tag_25h9_all.launch.py'))
-    #)
+    load_apriltag = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(apriltag_dir, 'launch', 'tag_25h9_all.launch.py'))
+    )
 
     # TODO: write node that randomly places AR cubes in the environment; being able to customize the size and modify
     #  the apriltag launch config and the urdf would be nice
@@ -193,7 +193,7 @@ def generate_launch_description():
     actions = [
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=spawn_model,
-            on_exit=[load_joint_state_controller, load_rviz, load_nav2, unpause_sim]  # , load_apriltag]
+            on_exit=[load_joint_state_controller, load_rviz, load_nav2, unpause_sim, load_apriltag]
         )),
         RegisterEventHandler(event_handler=OnProcessExit(
             target_action=load_joint_state_controller,
